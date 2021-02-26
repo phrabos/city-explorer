@@ -33,29 +33,10 @@ describe('app routes', () => {
 
     test('returns animals', async() => {
 
-      const expectation = [
-        {
-          'id': 1,
-          'name': 'bessie',
-          'coolfactor': 3,
-          'owner_id': 1
-        },
-        {
-          'id': 2,
-          'name': 'jumpy',
-          'coolfactor': 4,
-          'owner_id': 1
-        },
-        {
-          'id': 3,
-          'name': 'spot',
-          'coolfactor': 10,
-          'owner_id': 1
-        }
-      ];
+      const expectation = { 'formatted_query': 'Sibay, городской округ Сибай, Bashkortostan, Volga Federal District, UNDEFINED, Russia', 'latitude': '52.7206093188075', 'longitude': '58.6657536770277' };
 
       const data = await fakeRequest(app)
-        .get('/animals')
+        .get('/location')
         .expect('Content-Type', /json/)
         .expect(200);
 
