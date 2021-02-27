@@ -1,65 +1,959 @@
 require('dotenv').config();
 
-const { execSync } = require('child_process');
+const { mungeReviews, mungeLocation, mungeWeather } = require('../lib/munge-utils');
 
-const fakeRequest = require('supertest');
-const app = require('../lib/app');
-const client = require('../lib/client');
+test('returns a review from Yelp API', async() => {
 
-describe('app routes', () => {
-  describe('routes', () => {
-    let token;
+  const expectation = [
+    { 
+      'name': 'Owens Fish Camp', 
+      'image_url': 'https://s3-media3.fl.yelpcdn.com/bphoto/cIEYVhc7dMB-vIh_Tvv9gQ/o.jpg',
+      'price': '$$',
+      'rating': 4.5,
+      'url': 'https://www.yelp.com/biz/owens-fish-camp-sarasota?adjust_creative=iB-g85KitIPLvFXHo4hWFg&utm_campaign=yelp_api_v3&utm_medium=api_v3_business_search&utm_source=iB-g85KitIPLvFXHo4hWFg'
+    }
+  ]; 
   
-    beforeAll(async done => {
-      execSync('npm run setup-db');
-  
-      client.connect();
-  
-      const signInData = await fakeRequest(app)
-        .post('/auth/signup')
-        .send({
-          email: 'jon@user.com',
-          password: '1234'
-        });
+  const rawData = { 
+    'businesses': 
+    [
+      { 
+        'id': 'USq57A18KfPeheWDfFzVkA',
+        'alias': 'owens-fish-camp-sarasota',
+        'name': 'Owens Fish Camp',
+        'image_url': 'https://s3-media3.fl.yelpcdn.com/bphoto/cIEYVhc7dMB-vIh_Tvv9gQ/o.jpg',
+        'is_closed': false,
+        'url': 'https://www.yelp.com/biz/owens-fish-camp-sarasota?adjust_creative=iB-g85KitIPLvFXHo4hWFg&utm_campaign=yelp_api_v3&utm_medium=api_v3_business_search&utm_source=iB-g85KitIPLvFXHo4hWFg',
+        'review_count': 1656,
+        'categories': [{ 'alias': 'seafood', 'title': 'Seafood' }],
+        'rating': 4.5,
+        'coordinates': { 'latitude': 27.3319,
+          'longitude': -82.53974 },
+        'transactions': ['delivery'],
+        'price': '$$',
+        'location': { 'address1': '516 Burns Ln',
+          'address2': '',
+          'address3': '',
+          'city': 'Sarasota',
+          'zip_code': '34236',
+          'country': 'US',
+          'state': 'FL',
+          'display_address': ['516 Burns Ln', 
+            'Sarasota, FL 34236'] },
+        'phone': '+19419516936',
+        'display_phone': '(941) 951-6936',
+        'distance': 1029.578186539982 
+      }
+    ] 
+  }; 
+  const actual = mungeReviews(rawData); expect(actual).toEqual(expectation); });
+
+test('returns a location', async() => {
+
+  const expectation = 
+    { 
+      'formatted_query': 'Sarasota, Sarasota County, Florida, USA',
+      'latitude': '27.3364347',
+      'longitude': '-82.5306527'
+    }
+  ; 
+    
+  const rawData = [ 
+    {
+      'place_id': '284663538',
+      'licence': 'https://locationiq.com/attribution',
+      'osm_type': 'relation',
+      'osm_id': '117981',
+      'boundingbox': [
+        '27.2931077',
+        '27.3891533',
+        '-82.5889096',
+        '-82.4787116'
+      ],
+      'lat': '27.3364347',
+      'lon': '-82.5306527',
+      'display_name': 'Sarasota, Sarasota County, Florida, USA',
+      'class': 'place',
+      'type': 'city',
+      'importance': 0.629231607875402,
+      'icon': 'https://locationiq.org/static/images/mapicons/poi_place_city.p.20.png'
+    },
+    {
+      'place_id': '236238437',
+      'licence': 'https://locationiq.com/attribution',
+      'osm_type': 'relation',
+      'osm_id': '1210734',
+      'boundingbox': [
+        '26.945255',
+        '27.3897857',
+        '-82.705438',
+        '-82.056497'
+      ],
+      'lat': '27.1813609',
+      'lon': '-82.3609195',
+      'display_name': 'Sarasota County, Florida, USA',
+      'class': 'boundary',
+      'type': 'administrative',
+      'importance': 0.625021277321654,
+      'icon': 'https://locationiq.org/static/images/mapicons/poi_boundary_administrative.p.20.png'
+    },
+    {
+      'place_id': '83659648',
+      'licence': 'https://locationiq.com/attribution',
+      'osm_type': 'way',
+      'osm_id': '8763153',
+      'boundingbox': [
+        '42.356611',
+        '42.365855',
+        '-83.28506',
+        '-83.284724'
+      ],
+      'lat': '42.361521',
+      'lon': '-83.284788',
+      'display_name': 'Sarasota, Redford Township, Wayne County, Michigan, 48239, USA',
+      'class': 'highway',
+      'type': 'residential',
+      'importance': 0.2
+    },
+    {
+      'place_id': '175651918',
+      'licence': 'https://locationiq.com/attribution',
+      'osm_type': 'way',
+      'osm_id': '384591612',
+      'boundingbox': [
+        '34.1825904',
+        '34.187299',
+        '-116.474259',
+        '-116.4709'
+      ],
+      'lat': '34.185227',
+      'lon': '-116.472182',
+      'display_name': 'Sarasota, Pioneertown, Yucca Valley, San Bernardino County, California, 92268, USA',
+      'class': 'highway',
+      'type': 'track',
+      'importance': 0.2
+    },
+    {
+      'place_id': '77081069',
+      'licence': 'https://locationiq.com/attribution',
+      'osm_type': 'way',
+      'osm_id': '8763156',
+      'boundingbox': [
+        '42.385546',
+        '42.394636',
+        '-83.285997',
+        '-83.285692'
+      ],
+      'lat': '42.3901357',
+      'lon': '-83.2858378',
+      'display_name': 'Sarasota, Redford, Redford Township, Wayne County, Michigan, 48239, USA',
+      'class': 'highway',
+      'type': 'residential',
+      'importance': 0.2
+    },
+    {
+      'place_id': '82964068',
+      'licence': 'https://locationiq.com/attribution',
+      'osm_type': 'way',
+      'osm_id': '8763150',
+      'boundingbox': [
+        '42.38063',
+        '42.38472',
+        '-83.285673',
+        '-83.28553'
+      ],
+      'lat': '42.383553',
+      'lon': '-83.285628',
+      'display_name': 'Sarasota, Beech, Redford Township, Wayne County, Michigan, 48239, USA',
+      'class': 'highway',
+      'type': 'residential',
+      'importance': 0.2
+    }
+  ]; 
+  const actual = mungeLocation(rawData); expect(actual).toEqual(expectation); });
+
+test('returns a weather forecasts', async() => {
+
+  const expectation = [
+    {
+      'forecast': 'Light rain',
+      'time': 'Sat Feb 27 2021'
+    },
+    {
+      'forecast': 'Light shower rain',
+      'time': 'Sun Feb 28 2021'
+    },
+    {
+      'forecast': 'Overcast clouds',
+      'time': 'Mon Mar 01 2021'
+    },
+    {
+      'forecast': 'Few clouds',
+      'time': 'Tue Mar 02 2021'
+    },
+    {
+      'forecast': 'Clear Sky',
+      'time': 'Wed Mar 03 2021'
+    },
+    {
+      'forecast': 'Few clouds',
+      'time': 'Thu Mar 04 2021'
+    },
+    {
+      'forecast': 'Overcast clouds',
+      'time': 'Fri Mar 05 2021'
+    },
+    {
+      'forecast': 'Moderate rain',
+      'time': 'Sat Mar 06 2021'
+    },
+    {
+      'forecast': 'Few clouds',
+      'time': 'Sun Mar 07 2021'
+    },
+    {
+      'forecast': 'Clear Sky',
+      'time': 'Mon Mar 08 2021'
+    },
+    {
+      'forecast': 'Clear Sky',
+      'time': 'Tue Mar 09 2021'
+    },
+    {
+      'forecast': 'Few clouds',
+      'time': 'Wed Mar 10 2021'
+    },
+    {
+      'forecast': 'Overcast clouds',
+      'time': 'Thu Mar 11 2021'
+    },
+    {
+      'forecast': 'Broken clouds',
+      'time': 'Fri Mar 12 2021'
+    },
+    {
+      'forecast': 'Scattered clouds',
+      'time': 'Sat Mar 13 2021'
+    },
+    {
+      'forecast': 'Overcast clouds',
+      'time': 'Sun Mar 14 2021'
+    }
+  ]
+    ; 
       
-      token = signInData.body.token; // eslint-disable-line
-  
-      return done();
-    });
-  
-    afterAll(done => {
-      return client.end(done);
-    });
-
-    test('returns animals', async() => {
-
-      const expectation = [
-        {
-          'id': 1,
-          'name': 'bessie',
-          'coolfactor': 3,
-          'owner_id': 1
+  const rawData = {
+    'data': [
+      {
+        'moonrise_ts': 1614469037,
+        'wind_cdir': 'SSW',
+        'rh': 88,
+        'pres': 1002.96,
+        'high_temp': 14.4,
+        'sunset_ts': 1614467221,
+        'ozone': 273.33,
+        'moon_phase': 0.978963,
+        'wind_gust_spd': 6.29688,
+        'snow_depth': 0,
+        'clouds': 76,
+        'ts': 1614402060,
+        'sunrise_ts': 1614426468,
+        'app_min_temp': -2.3,
+        'wind_spd': 1.74385,
+        'pop': 85,
+        'wind_cdir_full': 'south-southwest',
+        'slp': 1021.13,
+        'moon_phase_lunation': 0.55,
+        'valid_date': '2021-02-27',
+        'app_max_temp': 14.4,
+        'vis': 21.8443,
+        'dewpt': 5.1,
+        'snow': 0,
+        'uv': 3.02237,
+        'weather': {
+          'icon': 'r01d',
+          'code': 500,
+          'description': 'Light rain'
         },
-        {
-          'id': 2,
-          'name': 'jumpy',
-          'coolfactor': 4,
-          'owner_id': 1
+        'wind_dir': 199,
+        'max_dhi': null,
+        'clouds_hi': 48,
+        'precip': 6.0625,
+        'low_temp': 2.3,
+        'max_temp': 14.7,
+        'moonset_ts': 1614430312,
+        'datetime': '2021-02-27',
+        'temp': 7.1,
+        'min_temp': 1.8,
+        'clouds_mid': 61,
+        'clouds_low': 56
+      },
+      {
+        'moonrise_ts': 1614555437,
+        'wind_cdir': 'E',
+        'rh': 94,
+        'pres': 1000.29,
+        'high_temp': 16.3,
+        'sunset_ts': 1614553682,
+        'ozone': 265.365,
+        'moon_phase': 0.932864,
+        'wind_gust_spd': 5.69922,
+        'snow_depth': 0,
+        'clouds': 93,
+        'ts': 1614488460,
+        'sunrise_ts': 1614512784,
+        'app_min_temp': 7.7,
+        'wind_spd': 1.41985,
+        'pop': 80,
+        'wind_cdir_full': 'east',
+        'slp': 1018.25,
+        'moon_phase_lunation': 0.58,
+        'valid_date': '2021-02-28',
+        'app_max_temp': 11.3,
+        'vis': 19.6592,
+        'dewpt': 8.4,
+        'snow': 0,
+        'uv': 2.77096,
+        'weather': {
+          'icon': 'r04d',
+          'code': 520,
+          'description': 'Light shower rain'
         },
-        {
-          'id': 3,
-          'name': 'spot',
-          'coolfactor': 10,
-          'owner_id': 1
-        }
-      ];
-
-      const data = await fakeRequest(app)
-        .get('/animals')
-        .expect('Content-Type', /json/)
-        .expect(200);
-
-      expect(data.body).toEqual(expectation);
-    });
-  });
-});
+        'wind_dir': 82,
+        'max_dhi': null,
+        'clouds_hi': 56,
+        'precip': 4.5,
+        'low_temp': 7.7,
+        'max_temp': 11.4,
+        'moonset_ts': 1614518530,
+        'datetime': '2021-02-28',
+        'temp': 9.4,
+        'min_temp': 7.7,
+        'clouds_mid': 73,
+        'clouds_low': 86
+      },
+      {
+        'moonrise_ts': 1614646122,
+        'wind_cdir': 'W',
+        'rh': 60,
+        'pres': 995.85,
+        'high_temp': 12.7,
+        'sunset_ts': 1614640142,
+        'ozone': 276.052,
+        'moon_phase': 0.861729,
+        'wind_gust_spd': 13.5938,
+        'snow_depth': 0,
+        'clouds': 94,
+        'ts': 1614574860,
+        'sunrise_ts': 1614599100,
+        'app_min_temp': 7.7,
+        'wind_spd': 3.16393,
+        'pop': 50,
+        'wind_cdir_full': 'west',
+        'slp': 1013.6,
+        'moon_phase_lunation': 0.61,
+        'valid_date': '2021-03-01',
+        'app_max_temp': 16.3,
+        'vis': 24.096,
+        'dewpt': 3,
+        'snow': 0,
+        'uv': 2.24678,
+        'weather': {
+          'icon': 'c04d',
+          'code': 804,
+          'description': 'Overcast clouds'
+        },
+        'wind_dir': 273,
+        'max_dhi': null,
+        'clouds_hi': 84,
+        'precip': 0.9375,
+        'low_temp': 7.7,
+        'max_temp': 17,
+        'moonset_ts': 1614606755,
+        'datetime': '2021-03-01',
+        'temp': 11.2,
+        'min_temp': 7.7,
+        'clouds_mid': 78,
+        'clouds_low': 41
+      },
+      {
+        'moonrise_ts': 1614736816,
+        'wind_cdir': 'SW',
+        'rh': 45,
+        'pres': 1005.77,
+        'high_temp': 9.8,
+        'sunset_ts': 1614726602,
+        'ozone': 349.146,
+        'moon_phase': 0.769879,
+        'wind_gust_spd': 11.3359,
+        'snow_depth': 0,
+        'clouds': 3,
+        'ts': 1614661260,
+        'sunrise_ts': 1614685416,
+        'app_min_temp': -8.6,
+        'wind_spd': 1.90176,
+        'pop': 0,
+        'wind_cdir_full': 'southwest',
+        'slp': 1027.54,
+        'moon_phase_lunation': 0.65,
+        'valid_date': '2021-03-02',
+        'app_max_temp': 9.8,
+        'vis': 24.128,
+        'dewpt': -9.4,
+        'snow': 0,
+        'uv': 5.33179,
+        'weather': {
+          'icon': 'c02d',
+          'code': 801,
+          'description': 'Few clouds'
+        },
+        'wind_dir': 222,
+        'max_dhi': null,
+        'clouds_hi': 3,
+        'precip': 0,
+        'low_temp': -2.9,
+        'max_temp': 9.8,
+        'moonset_ts': 1614695085,
+        'datetime': '2021-03-02',
+        'temp': 2,
+        'min_temp': -3,
+        'clouds_mid': 0,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1614827535,
+        'wind_cdir': 'SSW',
+        'rh': 67,
+        'pres': 1001.98,
+        'high_temp': 15.8,
+        'sunset_ts': 1614813062,
+        'ozone': 328.177,
+        'moon_phase': 0.663146,
+        'wind_gust_spd': 10.6953,
+        'snow_depth': 0,
+        'clouds': 0,
+        'ts': 1614747660,
+        'sunrise_ts': 1614771730,
+        'app_min_temp': -6.2,
+        'wind_spd': 2.50797,
+        'pop': 0,
+        'wind_cdir_full': 'south-southwest',
+        'slp': 1023.75,
+        'moon_phase_lunation': 0.68,
+        'valid_date': '2021-03-03',
+        'app_max_temp': 13.9,
+        'vis': 24.128,
+        'dewpt': -0.5,
+        'snow': 0,
+        'uv': 5.46667,
+        'weather': {
+          'icon': 'c01d',
+          'code': 800,
+          'description': 'Clear Sky'
+        },
+        'wind_dir': 206,
+        'max_dhi': null,
+        'clouds_hi': 0,
+        'precip': 0,
+        'low_temp': -0.6,
+        'max_temp': 13.9,
+        'moonset_ts': 1614783621,
+        'datetime': '2021-03-03',
+        'temp': 5.3,
+        'min_temp': -1.1,
+        'clouds_mid': 0,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1614918282,
+        'wind_cdir': 'WSW',
+        'rh': 74,
+        'pres': 999.889,
+        'high_temp': 12.5,
+        'sunset_ts': 1614899522,
+        'ozone': 319.278,
+        'moon_phase': 0.548204,
+        'wind_gust_spd': 2.30273,
+        'snow_depth': 0,
+        'clouds': 19,
+        'ts': 1614834060,
+        'sunrise_ts': 1614858044,
+        'app_min_temp': -2.3,
+        'wind_spd': 1.10142,
+        'pop': 0,
+        'wind_cdir_full': 'west-southwest',
+        'slp': 1021.28,
+        'moon_phase_lunation': 0.72,
+        'valid_date': '2021-03-04',
+        'app_max_temp': 15.8,
+        'vis': 24.128,
+        'dewpt': 2.7,
+        'snow': 0,
+        'uv': 5.34665,
+        'weather': {
+          'icon': 'c02d',
+          'code': 801,
+          'description': 'Few clouds'
+        },
+        'wind_dir': 247,
+        'max_dhi': null,
+        'clouds_hi': 19,
+        'precip': 0,
+        'low_temp': 4.1,
+        'max_temp': 16,
+        'moonset_ts': 1614872464,
+        'datetime': '2021-03-04',
+        'temp': 7.7,
+        'min_temp': 1.8,
+        'clouds_mid': 0,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1614922615,
+        'wind_cdir': 'NE',
+        'rh': 79,
+        'pres': 998.375,
+        'high_temp': 8.1,
+        'sunset_ts': 1614985981,
+        'ozone': 342.5,
+        'moon_phase': 0.431905,
+        'wind_gust_spd': 6.23438,
+        'snow_depth': 0,
+        'clouds': 85,
+        'ts': 1614920460,
+        'sunrise_ts': 1614944358,
+        'app_min_temp': 0.2,
+        'wind_spd': 1.41123,
+        'pop': 20,
+        'wind_cdir_full': 'northeast',
+        'slp': 1019.25,
+        'moon_phase_lunation': 0.75,
+        'valid_date': '2021-03-05',
+        'app_max_temp': 12.5,
+        'vis': 24.128,
+        'dewpt': 4.5,
+        'snow': 0,
+        'uv': 1.70543,
+        'weather': {
+          'icon': 'c04d',
+          'code': 804,
+          'description': 'Overcast clouds'
+        },
+        'wind_dir': 54,
+        'max_dhi': null,
+        'clouds_hi': 76,
+        'precip': 0.0625,
+        'low_temp': 2.2,
+        'max_temp': 13.3,
+        'moonset_ts': 1614961701,
+        'datetime': '2021-03-05',
+        'temp': 8.1,
+        'min_temp': 4.1,
+        'clouds_mid': 30,
+        'clouds_low': 67
+      },
+      {
+        'moonrise_ts': 1615013226,
+        'wind_cdir': 'NNE',
+        'rh': 93,
+        'pres': 992.938,
+        'high_temp': 7.9,
+        'sunset_ts': 1615072440,
+        'ozone': 375.812,
+        'moon_phase': 0.320744,
+        'wind_gust_spd': 13.1016,
+        'snow_depth': 0,
+        'clouds': 99,
+        'ts': 1615006860,
+        'sunrise_ts': 1615030671,
+        'app_min_temp': -3.7,
+        'wind_spd': 4.43753,
+        'pop': 90,
+        'wind_cdir_full': 'north-northeast',
+        'slp': 1014.19,
+        'moon_phase_lunation': 0.78,
+        'valid_date': '2021-03-06',
+        'app_max_temp': 3.2,
+        'vis': 14.7872,
+        'dewpt': 2.8,
+        'snow': 0,
+        'uv': 1.70323,
+        'weather': {
+          'icon': 'r02d',
+          'code': 501,
+          'description': 'Moderate rain'
+        },
+        'wind_dir': 30,
+        'max_dhi': null,
+        'clouds_hi': 68,
+        'precip': 12.125,
+        'low_temp': -2.5,
+        'max_temp': 6.5,
+        'moonset_ts': 1615051360,
+        'datetime': '2021-03-06',
+        'temp': 3.9,
+        'min_temp': -0.7,
+        'clouds_mid': 98,
+        'clouds_low': 98
+      },
+      {
+        'moonrise_ts': 1615103560,
+        'wind_cdir': 'E',
+        'rh': 66,
+        'pres': 1002.12,
+        'high_temp': 14.8,
+        'sunset_ts': 1615158899,
+        'ozone': 402.875,
+        'moon_phase': 0.220482,
+        'wind_gust_spd': 8.52344,
+        'snow_depth': 0,
+        'clouds': 14,
+        'ts': 1615093260,
+        'sunrise_ts': 1615116983,
+        'app_min_temp': -8,
+        'wind_spd': 2.80975,
+        'pop': 0,
+        'wind_cdir_full': 'east',
+        'slp': 1024.06,
+        'moon_phase_lunation': 0.82,
+        'valid_date': '2021-03-07',
+        'app_max_temp': 7.9,
+        'vis': 24.128,
+        'dewpt': -4.8,
+        'snow': 0,
+        'uv': 5.51527,
+        'weather': {
+          'icon': 'c02d',
+          'code': 801,
+          'description': 'Few clouds'
+        },
+        'wind_dir': 96,
+        'max_dhi': null,
+        'clouds_hi': 6,
+        'precip': 0,
+        'low_temp': -2.2,
+        'max_temp': 8.3,
+        'moonset_ts': 1615141384,
+        'datetime': '2021-03-07',
+        'temp': 1.7,
+        'min_temp': -2.7,
+        'clouds_mid': 6,
+        'clouds_low': 13
+      },
+      {
+        'moonrise_ts': 1615193465,
+        'wind_cdir': 'WNW',
+        'rh': 52,
+        'pres': 1001.94,
+        'high_temp': 19.5,
+        'sunset_ts': 1615245358,
+        'ozone': 336.469,
+        'moon_phase': 0.135851,
+        'wind_gust_spd': 6.5,
+        'snow_depth': 0,
+        'clouds': 0,
+        'ts': 1615179660,
+        'sunrise_ts': 1615203295,
+        'app_min_temp': -7.6,
+        'wind_spd': 1.6603,
+        'pop': 0,
+        'wind_cdir_full': 'west-northwest',
+        'slp': 1023.69,
+        'moon_phase_lunation': 0.85,
+        'valid_date': '2021-03-08',
+        'app_max_temp': 14.8,
+        'vis': 24.128,
+        'dewpt': -4.8,
+        'snow': 0,
+        'uv': 5.72803,
+        'weather': {
+          'icon': 'c01d',
+          'code': 800,
+          'description': 'Clear Sky'
+        },
+        'wind_dir': 300,
+        'max_dhi': null,
+        'clouds_hi': 0,
+        'precip': 0,
+        'low_temp': 1.5,
+        'max_temp': 14.9,
+        'moonset_ts': 1615231635,
+        'datetime': '2021-03-08',
+        'temp': 5.1,
+        'min_temp': -2.3,
+        'clouds_mid': 0,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1615282869,
+        'wind_cdir': 'W',
+        'rh': 53,
+        'pres': 1002.5,
+        'high_temp': 15,
+        'sunset_ts': 1615331816,
+        'ozone': 340.5,
+        'moon_phase': 0.0703545,
+        'wind_gust_spd': 4.90625,
+        'snow_depth': 0,
+        'clouds': 0,
+        'ts': 1615266060,
+        'sunrise_ts': 1615289606,
+        'app_min_temp': -3,
+        'wind_spd': 1.82466,
+        'pop': 0,
+        'wind_cdir_full': 'west',
+        'slp': 1024,
+        'moon_phase_lunation': 0.88,
+        'valid_date': '2021-03-09',
+        'app_max_temp': 16.8,
+        'vis': 24.128,
+        'dewpt': -1.7,
+        'snow': 0,
+        'uv': 5.79849,
+        'weather': {
+          'icon': 'c01d',
+          'code': 800,
+          'description': 'Clear Sky'
+        },
+        'wind_dir': 266,
+        'max_dhi': null,
+        'clouds_hi': 0,
+        'precip': 0,
+        'low_temp': 5.6,
+        'max_temp': 16.8,
+        'moonset_ts': 1615321952,
+        'datetime': '2021-03-09',
+        'temp': 9.2,
+        'min_temp': 1.3,
+        'clouds_mid': 0,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1615371794,
+        'wind_cdir': 'W',
+        'rh': 58,
+        'pres': 1002.25,
+        'high_temp': 15.3,
+        'sunset_ts': 1615418274,
+        'ozone': 331,
+        'moon_phase': 0.0262065,
+        'wind_gust_spd': 5.80469,
+        'snow_depth': 0,
+        'clouds': 2,
+        'ts': 1615352460,
+        'sunrise_ts': 1615375917,
+        'app_min_temp': 0.8,
+        'wind_spd': 2.19575,
+        'pop': 0,
+        'wind_cdir_full': 'west',
+        'slp': 1023.25,
+        'moon_phase_lunation': 0.92,
+        'valid_date': '2021-03-10',
+        'app_max_temp': 18.1,
+        'vis': 24.128,
+        'dewpt': 2.7,
+        'snow': 0,
+        'uv': 5.91491,
+        'weather': {
+          'icon': 'c02d',
+          'code': 801,
+          'description': 'Few clouds'
+        },
+        'wind_dir': 273,
+        'max_dhi': null,
+        'clouds_hi': 2,
+        'precip': 0,
+        'low_temp': 11.7,
+        'max_temp': 18.1,
+        'moonset_ts': 1615412216,
+        'datetime': '2021-03-10',
+        'temp': 11.3,
+        'min_temp': 4,
+        'clouds_mid': 0,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1615460319,
+        'wind_cdir': 'SSW',
+        'rh': 63,
+        'pres': 994.25,
+        'high_temp': 19.7,
+        'sunset_ts': 1615504732,
+        'ozone': 311.25,
+        'moon_phase': 0.00438755,
+        'wind_gust_spd': 14.1094,
+        'snow_depth': 0,
+        'clouds': 72,
+        'ts': 1615438860,
+        'sunrise_ts': 1615462228,
+        'app_min_temp': 9.9,
+        'wind_spd': 5.12212,
+        'pop': 0,
+        'wind_cdir_full': 'south-southwest',
+        'slp': 1015.25,
+        'moon_phase_lunation': 0.95,
+        'valid_date': '2021-03-11',
+        'app_max_temp': 18.8,
+        'vis': 24.128,
+        'dewpt': 7.4,
+        'snow': 0,
+        'uv': 4.17539,
+        'weather': {
+          'icon': 'c04d',
+          'code': 804,
+          'description': 'Overcast clouds'
+        },
+        'wind_dir': 209,
+        'max_dhi': null,
+        'clouds_hi': 59,
+        'precip': 0,
+        'low_temp': 17.6,
+        'max_temp': 19.5,
+        'moonset_ts': 1615502370,
+        'datetime': '2021-03-11',
+        'temp': 14.7,
+        'min_temp': 8.6,
+        'clouds_mid': 20,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1615548547,
+        'wind_cdir': 'WNW',
+        'rh': 60,
+        'pres': 996.75,
+        'high_temp': 15,
+        'sunset_ts': 1615591190,
+        'ozone': 364.125,
+        'moon_phase': 0.0047545,
+        'wind_gust_spd': 6.10156,
+        'snow_depth': 0,
+        'clouds': 50,
+        'ts': 1615525260,
+        'sunrise_ts': 1615548538,
+        'app_min_temp': 8.6,
+        'wind_spd': 1.95666,
+        'pop': 70,
+        'wind_cdir_full': 'west-northwest',
+        'slp': 1017.75,
+        'moon_phase_lunation': 0.99,
+        'valid_date': '2021-03-12',
+        'app_max_temp': 15,
+        'vis': 24.128,
+        'dewpt': 3.1,
+        'snow': 0,
+        'uv': 5.97552,
+        'weather': {
+          'icon': 'c03d',
+          'code': 803,
+          'description': 'Broken clouds'
+        },
+        'wind_dir': 301,
+        'max_dhi': null,
+        'clouds_hi': 8,
+        'precip': 2.125,
+        'low_temp': 4.4,
+        'max_temp': 15,
+        'moonset_ts': 1615592409,
+        'datetime': '2021-03-12',
+        'temp': 11.8,
+        'min_temp': 4.4,
+        'clouds_mid': 50,
+        'clouds_low': 50
+      },
+      {
+        'moonrise_ts': 1615636573,
+        'wind_cdir': 'WSW',
+        'rh': 63,
+        'pres': 1000,
+        'high_temp': 15.4,
+        'sunset_ts': 1615681248,
+        'ozone': 345,
+        'moon_phase': 0.026182,
+        'wind_gust_spd': 9.83594,
+        'snow_depth': 0,
+        'clouds': 32,
+        'ts': 1615611660,
+        'sunrise_ts': 1615634848,
+        'app_min_temp': 2.1,
+        'wind_spd': 3.26504,
+        'pop': 0,
+        'wind_cdir_full': 'west-southwest',
+        'slp': 1021,
+        'moon_phase_lunation': 0.02,
+        'valid_date': '2021-03-13',
+        'app_max_temp': 15.3,
+        'vis': 24.128,
+        'dewpt': 3.3,
+        'snow': 0,
+        'uv': 3.4427,
+        'weather': {
+          'icon': 'c02d',
+          'code': 802,
+          'description': 'Scattered clouds'
+        },
+        'wind_dir': 244,
+        'max_dhi': null,
+        'clouds_hi': 32,
+        'precip': 0,
+        'low_temp': 5.1,
+        'max_temp': 15.4,
+        'moonset_ts': 1615685957,
+        'datetime': '2021-03-13',
+        'temp': 10.4,
+        'min_temp': 5.1,
+        'clouds_mid': 18,
+        'clouds_low': 0
+      },
+      {
+        'moonrise_ts': 1615724479,
+        'wind_cdir': 'SSW',
+        'rh': 72,
+        'pres': 990.25,
+        'high_temp': 19.7,
+        'sunset_ts': 1615764105,
+        'ozone': 301.75,
+        'moon_phase': 0.026182,
+        'wind_gust_spd': 17.5,
+        'snow_depth': 0,
+        'clouds': 100,
+        'ts': 1615698060,
+        'sunrise_ts': 1615721158,
+        'app_min_temp': 11.7,
+        'wind_spd': 7.04217,
+        'pop': 0,
+        'wind_cdir_full': 'south-southwest',
+        'slp': 1010,
+        'moon_phase_lunation': 0.05,
+        'valid_date': '2021-03-14',
+        'app_max_temp': 17.6,
+        'vis': 24.128,
+        'dewpt': 9.6,
+        'snow': 0,
+        'uv': 1.94058,
+        'weather': {
+          'icon': 'c04d',
+          'code': 804,
+          'description': 'Overcast clouds'
+        },
+        'wind_dir': 198,
+        'max_dhi': null,
+        'clouds_hi': 100,
+        'precip': 0,
+        'low_temp': 13.5,
+        'max_temp': 19.7,
+        'moonset_ts': 1615768757,
+        'datetime': '2021-03-14',
+        'temp': 14.6,
+        'min_temp': 11.7,
+        'clouds_mid': 75,
+        'clouds_low': 61
+      }
+    ],
+    'city_name': 'Owensville',
+    'lon': -78.54,
+    'timezone': 'America/New_York',
+    'lat': 38.12,
+    'country_code': 'US',
+    'state_code': 'VA'
+  };
+  const actual = mungeWeather(rawData); expect(actual).toEqual(expectation); });
